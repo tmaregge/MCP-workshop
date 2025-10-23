@@ -26,6 +26,21 @@ dotnet watch run
 ### Testing HTTP Endpoints
 The `TodoApi.http` file contains HTTP request examples for testing endpoints. The default application URL is `http://localhost:5056`.
 
+### Database Migrations
+```bash
+# Add a new migration (after model changes)
+dotnet ef migrations add <MigrationName>
+
+# Apply migrations to the database
+dotnet ef database update
+
+# Remove the last migration (if not yet applied)
+dotnet ef migrations remove
+
+# View migration SQL without applying
+dotnet ef migrations script
+```
+
 ## Architecture
 
 ### Minimal API Structure
@@ -51,13 +66,39 @@ The `Todo` class includes:
 - Automatic timestamps: CreatedAt, UpdatedAt
 
 ### Configuration
-- `appsettings.json`: Base configuration
+- `appsettings.json`: Base configuration with connection strings
 - `appsettings.Development.json`: Development-specific overrides
 - `Properties/launchSettings.json`: Launch profiles with port configurations
+
+### Data Access Layer
+
+**Database**: SQLite database (`todos.db`) configured via Entity Framework Core 9.0
+
+**DbContext**: `TodoDbContext` (in `Data/` directory)
+- Configures entity mappings and relationships
+- Enums stored as strings for readability
+- Includes indexes on State, Creator, and CreatedAt for query performance
+- Tags stored as comma-separated values
+
+**Repository Pattern**: `ITodoRepository` interface with `TodoRepository` implementation (in `Repositories/` directory)
+- Registered as scoped service in DI container
+- Provides methods:
+  - `GetAllAsync()`: Returns all todos ordered by creation date
+  - `GetByIdAsync(Guid)`: Find todo by ID
+  - `GetByCreatorAsync(string)`: Filter by creator
+  - `GetByStateAsync(TodoState)`: Filter by state
+  - `CreateAsync(Todo)`: Create new todo with auto-generated ID and timestamps
+  - `UpdateAsync(Todo)`: Update existing todo and set UpdatedAt timestamp
+  - `DeleteAsync(Guid)`: Delete todo by ID
+  - `ExistsAsync(Guid)`: Check if todo exists
+
+**Important**: When creating todos via the repository, the Id, CreatedAt, and UpdatedAt fields are automatically set. When updating, the UpdatedAt field is automatically updated.
 
 ## Adding New Endpoints
 
 When adding minimal API endpoints in `Program.cs`:
-1. Define route handlers before `app.Run()`
-2. Use `.WithName()` to name endpoints for OpenAPI
-3. Follow the pattern: `app.MapVerb("/route", handler)`
+1. Inject `ITodoRepository` into route handlers via parameter
+2. Define route handlers before `app.Run()`
+3. Use `.WithName()` to name endpoints for OpenAPI
+4. Follow the pattern: `app.MapVerb("/route", async (ITodoRepository repo) => { ... })`
+5. Return appropriate HTTP status codes (Ok, NotFound, Created, etc.)
