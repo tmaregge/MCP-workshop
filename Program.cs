@@ -1,12 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using TodoApi.Data;
 using TodoApi.Repositories;
+using TodoApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
+builder.Services.AddRazorPages();
+builder.Services.AddServerSideBlazor();
 
 // Add database context
 builder.Services.AddDbContext<TodoDbContext>(options =>
@@ -14,6 +17,10 @@ builder.Services.AddDbContext<TodoDbContext>(options =>
 
 // Add repository
 builder.Services.AddScoped<ITodoRepository, TodoRepository>();
+
+// Add HttpClient for TodoService
+builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5056") });
+builder.Services.AddScoped<TodoService>();
 
 var app = builder.Build();
 
@@ -24,7 +31,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
 
 app.MapControllers();
+app.MapBlazorHub();
+app.MapFallbackToPage("/_Host");
 
 app.Run();

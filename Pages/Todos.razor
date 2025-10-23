@@ -1,0 +1,262 @@
+@page "/todos"
+@inject TodoService TodoService
+
+<PageTitle>Todo List</PageTitle>
+
+<div class="container mt-4">
+    <h1>Todo List</h1>
+
+    @if (errorMessage != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="@(() => errorMessage = null)"></button>
+        </div>
+    }
+
+    @if (successMessage != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" @onclick="@(() => successMessage = null)"></button>
+        </div>
+    }
+
+    <!-- Add/Edit Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">@(editingTodo != null ? "Edit Todo" : "Add New Todo")</h5>
+            <EditForm Model="@currentTodo" OnValidSubmit="@SaveTodo">
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <InputText class="form-control" @bind-Value="currentTodo.Title" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <InputTextArea class="form-control" @bind-Value="currentTodo.Description" rows="3" />
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Creator</label>
+                        <InputText class="form-control" @bind-Value="currentTodo.Creator" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">State</label>
+                        <InputSelect class="form-select" @bind-Value="currentTodo.State">
+                            <option value="@TodoState.Todo">Todo</option>
+                            <option value="@TodoState.Doing">Doing</option>
+                            <option value="@TodoState.Done">Done</option>
+                        </InputSelect>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Priority</label>
+                        <InputSelect class="form-select" @bind-Value="currentTodo.Priority">
+                            <option value="@Priority.Low">Low</option>
+                            <option value="@Priority.Medium">Medium</option>
+                            <option value="@Priority.High">High</option>
+                            <option value="@Priority.Urgent">Urgent</option>
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tags (comma-separated)</label>
+                    <InputText class="form-control" @bind-Value="tagsInput" placeholder="work, urgent, project" />
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        @(editingTodo != null ? "Update" : "Add") Todo
+                    </button>
+                    @if (editingTodo != null)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+                    }
+                </div>
+            </EditForm>
+        </div>
+    </div>
+
+    <!-- Todo List -->
+    @if (isLoading)
+    {
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (todos == null || !todos.Any())
+    {
+        <div class="alert alert-info">No todos yet. Create one above!</div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var todo in todos)
+            {
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card h-100 @GetCardClass(todo.State)">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title">@todo.Title</h5>
+                                <span class="badge @GetPriorityBadgeClass(todo.Priority)">@todo.Priority</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(todo.Description))
+                            {
+                                <p class="card-text">@todo.Description</p>
+                            }
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <strong>Creator:</strong> @todo.Creator<br />
+                                    <strong>State:</strong> @todo.State<br />
+                                    <strong>Created:</strong> @todo.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+                                </small>
+                            </div>
+                            @if (todo.Tags.Any())
+                            {
+                                <div class="mb-2">
+                                    @foreach (var tag in todo.Tags)
+                                    {
+                                        <span class="badge bg-secondary me-1">@tag</span>
+                                    }
+                                </div>
+                            }
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary" @onclick="() => EditTodo(todo)">Edit</button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTodo(todo.Id)">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Todo>? todos;
+    private Todo currentTodo = new() { Title = "", Creator = "", Tags = new List<string>() };
+    private Todo? editingTodo;
+    private string tagsInput = "";
+    private bool isLoading = true;
+    private string? errorMessage;
+    private string? successMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTodos();
+    }
+
+    private async Task LoadTodos()
+    {
+        try
+        {
+            isLoading = true;
+            todos = await TodoService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading todos: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task SaveTodo()
+    {
+        try
+        {
+            // Parse tags from input
+            if (!string.IsNullOrWhiteSpace(tagsInput))
+            {
+                currentTodo.Tags = tagsInput.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(t => t.Trim())
+                    .ToList();
+            }
+
+            if (editingTodo != null)
+            {
+                await TodoService.UpdateAsync(currentTodo);
+                successMessage = "Todo updated successfully!";
+            }
+            else
+            {
+                await TodoService.CreateAsync(currentTodo);
+                successMessage = "Todo created successfully!";
+            }
+
+            await LoadTodos();
+            ResetForm();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving todo: {ex.Message}";
+        }
+    }
+
+    private void EditTodo(Todo todo)
+    {
+        editingTodo = todo;
+        currentTodo = new Todo
+        {
+            Id = todo.Id,
+            Title = todo.Title,
+            Description = todo.Description,
+            Creator = todo.Creator,
+            State = todo.State,
+            Priority = todo.Priority,
+            Tags = new List<string>(todo.Tags),
+            CreatedAt = todo.CreatedAt,
+            UpdatedAt = todo.UpdatedAt
+        };
+        tagsInput = string.Join(", ", todo.Tags);
+    }
+
+    private void CancelEdit()
+    {
+        ResetForm();
+    }
+
+    private async Task DeleteTodo(Guid id)
+    {
+        try
+        {
+            await TodoService.DeleteAsync(id);
+            successMessage = "Todo deleted successfully!";
+            await LoadTodos();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting todo: {ex.Message}";
+        }
+    }
+
+    private void ResetForm()
+    {
+        currentTodo = new Todo { Title = "", Creator = "", Tags = new List<string>() };
+        editingTodo = null;
+        tagsInput = "";
+    }
+
+    private string GetCardClass(TodoState state)
+    {
+        return state switch
+        {
+            TodoState.Done => "border-success",
+            TodoState.Doing => "border-warning",
+            _ => "border-primary"
+        };
+    }
+
+    private string GetPriorityBadgeClass(Priority priority)
+    {
+        return priority switch
+        {
+            Priority.Urgent => "bg-danger",
+            Priority.High => "bg-warning text-dark",
+            Priority.Medium => "bg-info text-dark",
+            _ => "bg-secondary"
+        };
+    }
+}
