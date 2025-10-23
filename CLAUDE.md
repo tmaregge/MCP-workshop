@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an ASP.NET Core 9.0 Web API project for a Todo application. It uses minimal APIs (no controllers) and is configured for development with OpenAPI support.
+This is an ASP.NET Core 9.0 Web API project for a Todo application. It uses traditional MVC controllers and is configured for development with OpenAPI support.
 
 ## Development Commands
 
@@ -43,8 +43,8 @@ dotnet ef migrations script
 
 ## Architecture
 
-### Minimal API Structure
-The application uses ASP.NET Core minimal APIs defined in `Program.cs`. All endpoints are registered using `app.MapGet()`, `app.MapPost()`, etc. rather than traditional controllers.
+### API Controllers
+The application uses traditional ASP.NET Core MVC controllers located in the `Controllers/` directory. Controllers are registered via `AddControllers()` and mapped with `MapControllers()` in `Program.cs`.
 
 ### Project Configuration
 - **Target Framework**: .NET 9.0
@@ -94,11 +94,28 @@ The `Todo` class includes:
 
 **Important**: When creating todos via the repository, the Id, CreatedAt, and UpdatedAt fields are automatically set. When updating, the UpdatedAt field is automatically updated.
 
-## Adding New Endpoints
+### Controllers
 
-When adding minimal API endpoints in `Program.cs`:
-1. Inject `ITodoRepository` into route handlers via parameter
-2. Define route handlers before `app.Run()`
-3. Use `.WithName()` to name endpoints for OpenAPI
-4. Follow the pattern: `app.MapVerb("/route", async (ITodoRepository repo) => { ... })`
-5. Return appropriate HTTP status codes (Ok, NotFound, Created, etc.)
+**TodoController** (in `Controllers/` directory) - Main API controller at route `/api/todo`
+
+Available endpoints:
+- `GET /api/todo` - Get all todos
+- `GET /api/todo/{id}` - Get todo by ID
+- `GET /api/todo/creator/{creator}` - Get todos by creator
+- `GET /api/todo/state/{state}` - Get todos by state (Todo, Doing, Done)
+- `POST /api/todo` - Create a new todo
+- `PUT /api/todo/{id}` - Update an existing todo
+- `DELETE /api/todo/{id}` - Delete a todo
+- `HEAD /api/todo/{id}` - Check if a todo exists
+
+The controller uses constructor injection to receive `ITodoRepository` and `ILogger<TodoController>`. All endpoints return appropriate HTTP status codes and error messages.
+
+## Adding New Controllers or Endpoints
+
+When creating new controllers:
+1. Place them in the `Controllers/` directory
+2. Inherit from `ControllerBase` and use `[ApiController]` attribute
+3. Define route with `[Route("api/[controller]")]`
+4. Inject dependencies via constructor
+5. Use async/await for all repository operations
+6. Return appropriate `ActionResult<T>` types with status codes (Ok, NotFound, BadRequest, Created, NoContent)

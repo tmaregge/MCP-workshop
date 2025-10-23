@@ -1,6 +1,69 @@
 @TodoApi_HostAddress = http://localhost:5056
 
-GET {{TodoApi_HostAddress}}/weatherforecast/
+### Get all todos
+GET {{TodoApi_HostAddress}}/api/todo
 Accept: application/json
+
+###
+
+### Get todo by ID
+GET {{TodoApi_HostAddress}}/api/todo/{{todoId}}
+Accept: application/json
+
+###
+
+### Get todos by creator
+GET {{TodoApi_HostAddress}}/api/todo/creator/john
+Accept: application/json
+
+###
+
+### Get todos by state
+GET {{TodoApi_HostAddress}}/api/todo/state/Todo
+Accept: application/json
+
+###
+
+### Create a new todo
+POST {{TodoApi_HostAddress}}/api/todo
+Content-Type: application/json
+
+{
+  "title": "Complete project documentation",
+  "description": "Write comprehensive documentation for the Todo API",
+  "creator": "john",
+  "state": "Todo",
+  "priority": "High",
+  "dueDate": "2025-10-30T00:00:00Z",
+  "tags": ["documentation", "urgent"]
+}
+
+###
+
+### Update a todo
+PUT {{TodoApi_HostAddress}}/api/todo/{{todoId}}
+Content-Type: application/json
+
+{
+  "id": "{{todoId}}",
+  "title": "Complete project documentation",
+  "description": "Write comprehensive documentation for the Todo API - UPDATED",
+  "creator": "john",
+  "state": "Doing",
+  "priority": "High",
+  "startDate": "2025-10-23T00:00:00Z",
+  "dueDate": "2025-10-30T00:00:00Z",
+  "tags": ["documentation", "urgent", "in-progress"]
+}
+
+###
+
+### Delete a todo
+DELETE {{TodoApi_HostAddress}}/api/todo/{{todoId}}
+
+###
+
+### Check if todo exists
+HEAD {{TodoApi_HostAddress}}/api/todo/{{todoId}}
 
 ###
