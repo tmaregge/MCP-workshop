@@ -11,6 +11,12 @@ builder.Services.AddOpenApi();
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 
+// Add MCP server
+builder.Services
+    .AddMcpServer()
+    .WithHttpTransport()
+    .WithToolsFromAssembly();
+
 // Add database context
 builder.Services.AddDbContext<TodoDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=todos.db"));
@@ -29,6 +35,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.MapMcp("/mcp");
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
