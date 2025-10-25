@@ -4,6 +4,8 @@
 
 Vi skal legge til MCP på et eksisterende todo-API. API-et lar en vise, opprette, redigere og slette oppgaver. Idéen er at vi skal gjøre det mulig for f.eks. GitHub Copilot å jobbe med oppgavene på tvers av sessions.
 
+Dersom du sitter fast kan du ta en titt på commit-historikken i [solution-branchen](https://github.com/tmaregge/MCP-workshop/tree/solution).
+
 ## Oppgave -1: Grunnleggende oppsett
 
 1. Klon repo: `git clone https://github.com/tmaregge/MCP-workshop.git`
