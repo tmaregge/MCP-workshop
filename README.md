@@ -149,14 +149,25 @@ Bruk metodene fra `ITodoRepository` for å implementere tools for å gjøre føl
 3. Slette todo
 4. Oppdatere en todo med ny info
 
-Test gjerne underveis vha MCP Inspector og GitHub Copilot. Prøv gjerne å utføre kompliserte oppgaver, som å få Copilot til å bryte ned en eksisterende todo i mer konkrete oppgaver, eller å be Copilot om å omprioritere eksisterende todos.
+Hold gjerne funksjonaliteten enkel til å begynne med. Mer avansert filtrering og lignende kan eventuelt legges på etter hvert. Utforsk hva agenten er i stand til å gjøre med relativt enkle tools!
+
+Når du er ferdig med å lage tools kan du teste følgende:
+* Bryt ned en feature i konkrete oppgaver
+* Lag et sammendrag av de viktigste oppgavene
+* Omprioriter oppgaver basert
+* List opp todos relatert til et gitt tema/tag
+* Slett todos som er utført
+
 
 💡 Tips:
-* Bruk grensesnittet til todo-API-et for å sjekke at tools fungerer som de skal, opprette testdata, etc.
+* Test tools med MCP Inspector før du prøver med Copilot
+* Bruk grensesnittet til todo-API-et for å opprette data og verifisere at ting funker
+* Kast `McpException` når du vil at en feilmelding skal vises til brukeren
+* Hvis et tool ikke dukker i Copilot hender det at man må restarte MCP-koblingen. I VS Code kan man gjøre dette i `mcp.json`-filen
 
-## Oppgave 2: Lag prompts (bonus)
+## Oppgave 2: Lag prompts
 
-Serveren kan definere `Prompts` som agenter kan bruke. Dette er akkurat det det høres ut som. Man kan bruke dette til vanlige arbeidsflyter.
+MCP-serveren kan definere vilkårlige `Prompts` som man kan ta i bruk via agenter. Disse brukes ved å skrive `/` etterfulgt av prompt-navnet, f.eks. `/list` for å få et prompt som kan brukes for å liste todos. Prompts kan brukes til å definere vanlige arbeidsflyter, redusere mengden tekst man trenger å skrive, fortelle agenten hvordan den skal bruke tools i kombinasjon, etc.
 
 Opprett filen `MCP/Prompts/TodoPrompts.cs` og lag ulike prompts. Her er et eksempel fra [dokumentasjonen](https://github.com/modelcontextprotocol/csharp-sdk):
 ```csharp
@@ -169,9 +180,24 @@ public static class MyPrompts
 }
 ```
 
-Her er noen eksempler på prompts man kan lage:
-* Bryte ned en feature til oppgaver
-* Prompt for å bryte ned en feature til oppgaver
+Funksjonen returnerer et `ChatMessage`-objekt med en melding som pastes i chatboksen til Copilot når du skriver `/summarize`. Man kan returnere en liste med `ChatMessage` for å simulere en samtale. Da kan man f.eks legge inn et systemprompt ved å bruke `ChatRole.System`.
+
+Her er noen eksempler på ting man kan lage prompts for:
+* Lag en konsis oppsummering av relevante todos (kun tittel, feks)
+* Lag en detaljert rapport av ukens arbeid (hva som ble utført og når ting ble gjort)
+* Sorter todos basert på prioritet, og bruk emojis for å representere de ulike nivåene
+* Hva enn du kommer på. Kun fantasien setter grenser ✋🌈🤚
+
+💡 Tips:
+* For at Prompts skal eksponeres må man kalle `.WithPromptsFromAssembly()` i service builder-en 
+* Som med Tools kan det hende du må restarte MCP-koblingen for at de skal dukke opp
+    
+## Oppgave 3: Autentisering (bonus for nørds 🤓)
+
+Per nå har API-et sånn ca. null sikkerhet, og vi kan se og redigere andre brukeres todos ved å late som vi er en annen bruker. Legg ved tokens på forespørslene og database-objektene for å hindre at uvedkommende får tilgang.
+
+Hvis du har kommet så langt trenger du vel ikke så mye hjelp, men her er en nyttig [artikkel](https://auth0.com/blog/an-introduction-to-mcp-and-authorization/) 😉
 
 
+Dobbel bonus: Eksponer todo-API-et via HTTPS i stedet for HTTP.
 
