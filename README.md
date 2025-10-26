@@ -192,11 +192,27 @@ Her er noen eksempler på ting man kan lage prompts for:
 * For at Prompts skal eksponeres må man kalle `.WithPromptsFromAssembly()` i service builder-en 
 * Som med Tools kan det hende du må restarte MCP-koblingen for at de skal dukke opp
     
-## Oppgave 3: Autentisering (bonus for nørds 🤓)
+## Oppgave 3: Elicitation
 
-Per nå har API-et sånn ca. null sikkerhet, og vi kan se og redigere andre brukeres todos ved å late som vi er en annen bruker. Legg ved tokens på forespørslene og database-objektene for å hindre at uvedkommende får tilgang.
+Elicitation lar MCP-serveren be brukeren om ekstra input. Dersom Elicitation trigges vil brukeren få en popup med informasjonen de må fylle ut.
 
-Hvis du har kommet så langt trenger du vel ikke så mye hjelp, men her er en nyttig [artikkel](https://auth0.com/blog/an-introduction-to-mcp-and-authorization/) 😉
+For legge til et Elicitation-steg i et gitt tool må man gjøre følgende:
+* Legg til `McpServer` som funksjonsparameter via dependency injection
+* Definere hvordan informasjonen som skal hentes ser vha `ElicitRequestParams.RequestSchema`
+* Kalle `McpServer.ElicitAsync` med det definerte schema-et
+
+Kodeeksempler er tilgjengelige i denne [artikkelen](https://devblogs.microsoft.com/dotnet/mcp-csharp-sdk-2025-06-18-update/), men legg merke til at `IMcpServer` er deprecated til fordel for `McpServer`.
+
+Bruk Elicitation til å gjøre følgende:
+* Be bruker oppgi `Creator` og `Title` dersom det mangler
+* Ber om ekstra bekreftelse ved sletting av todos hvor `Priority` er `High` eller `Urgent`
+* Noen andre kule idéer? 😉
+    
+## Oppgave 4: Autentisering (bonus for nørds 🤓)
+
+Per nå har API-et sånn ca. null sikkerhet, og vi kan se og redigere andre brukeres todos ved å sende et vilkårlig navn som `Creator`. Legg ved tokens på forespørslene og database-objektene for å hindre at uvedkommende får tilgang.
+
+Hvis du har kommet så langt trenger du vel ikke så mye hjelp, men her er en [nyttig artikkel](https://auth0.com/blog/an-introduction-to-mcp-and-authorization/) 😉
 
 
 Dobbel bonus: Eksponer todo-API-et via HTTPS i stedet for HTTP.
