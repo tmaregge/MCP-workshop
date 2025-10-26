@@ -19,7 +19,38 @@ public class TodoTool(ITodoRepository todoRepo)
         {
             throw new McpException("Missing creator parameter");
         }
-        
+
         return await todoRepo.GetByCreatorAsync(creator);
+    }
+
+    [McpServerTool, Description("Tool to create a new todo item")]
+    public async Task<Todo> CreateTodo(
+        string title,
+        string creator,
+        string? description = null,
+        TodoState state = TodoState.Todo,
+        Priority priority = Priority.Medium,
+        DateTime? startDate = null,
+        DateTime? dueDate = null,
+        DateTime? endDate = null,
+        List<string>? tags = null)
+    {
+        if (string.IsNullOrWhiteSpace(title)) throw new McpException("Missing title parameter");
+        if (string.IsNullOrWhiteSpace(creator)) throw new McpException("Missing creator parameter");
+        
+        var todo = new Todo
+        {
+            Title = title,
+            Description = description,
+            Creator = creator,
+            State = state,
+            Priority = priority,
+            StartDate = startDate ?? DateTime.Now,
+            DueDate = dueDate,
+            EndDate = endDate,
+            Tags = tags ?? []
+        };
+
+        return await todoRepo.CreateAsync(todo);
     }
 }
