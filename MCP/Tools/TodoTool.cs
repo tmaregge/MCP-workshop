@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Text.Json.Serialization;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
 using TodoApi.Models;
@@ -45,7 +46,7 @@ public class TodoTool(ITodoRepository todoRepo)
             Creator = creator,
             State = state,
             Priority = priority,
-            StartDate = startDate ?? DateTime.Now,
+            StartDate = startDate ?? System.DateTime.Now,
             DueDate = dueDate,
             EndDate = endDate,
             Tags = tags ?? []
@@ -71,5 +72,49 @@ public class TodoTool(ITodoRepository todoRepo)
         }
 
         return await todoRepo.DeleteAsync(id);
+    }
+    
+    [McpServerTool, Description("Tool to update a todo item by ID. Only the creator can update their todo.")]
+    public async Task<Todo?> UpdateTodo(
+        Guid id,
+        string creator,
+        string? title = null,
+        string? description = null,
+        TodoState? state = null,
+        Priority? priority = null,
+        DateTime? startDate = null,
+        DateTime? dueDate = null,
+        DateTime? endDate = null,
+        List<string>? tags = null)
+    {
+        if (string.IsNullOrWhiteSpace(creator)) throw new McpException("Missing creator parameter");
+
+        var todo = await todoRepo.GetByIdAsync(id);
+        if (todo == null)
+        {
+            throw new McpException($"Todo with ID {id} not found");
+        }
+
+        if (todo.Creator != creator)
+        {
+            throw new McpException("You are not authorized to change this todo");
+        }
+
+        var updatedTodo = new Todo
+        {
+            Id = id,
+            Creator = todo.Creator,
+            Title = title ?? todo.Title,
+            Description = description ?? todo.Description,
+            State = state ?? todo.State,
+            Priority = priority ?? todo.Priority,
+            StartDate = startDate ?? todo.StartDate,
+            DueDate = dueDate ?? todo.DueDate,
+            EndDate = endDate ?? todo.EndDate,
+            Tags = tags ?? todo.Tags,
+            CreatedAt = todo.CreatedAt
+        };
+
+        return await todoRepo.UpdateAsync(updatedTodo);
     }
 }
