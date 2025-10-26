@@ -37,7 +37,7 @@ public class TodoTool(ITodoRepository todoRepo)
     {
         if (string.IsNullOrWhiteSpace(title)) throw new McpException("Missing title parameter");
         if (string.IsNullOrWhiteSpace(creator)) throw new McpException("Missing creator parameter");
-        
+
         var todo = new Todo
         {
             Title = title,
@@ -52,5 +52,24 @@ public class TodoTool(ITodoRepository todoRepo)
         };
 
         return await todoRepo.CreateAsync(todo);
+    }
+
+    [McpServerTool, Description("Tool to delete a todo item by ID. Only the creator can delete their todo.")]
+    public async Task<bool> DeleteTodo(Guid id, string creator)
+    {
+        if (string.IsNullOrWhiteSpace(creator)) throw new McpException("Missing creator parameter");
+
+        var todo = await todoRepo.GetByIdAsync(id);
+        if (todo == null)
+        {
+            throw new McpException($"Todo with ID {id} not found");
+        }
+
+        if (todo.Creator != creator)
+        {
+            throw new McpException("You are not authorized to delete this todo");
+        }
+
+        return await todoRepo.DeleteAsync(id);
     }
 }
