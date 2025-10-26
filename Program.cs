@@ -15,7 +15,8 @@ builder.Services.AddServerSideBlazor();
 builder.Services
     .AddMcpServer()
     .WithHttpTransport()
-    .WithToolsFromAssembly();
+    .WithToolsFromAssembly()
+    .WithPromptsFromAssembly();
 
 // Add database context
 builder.Services.AddDbContext<TodoDbContext>(options =>
